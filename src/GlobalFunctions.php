@@ -235,8 +235,10 @@ function smwfGetLinker() {
  *
  * @codeCoverageIgnore
  */
-function enableSemantics( $namespace = null, $complete = false ) {
+function enableSemanticMediaWiki( $namespace = null, $complete = false ) {
 	global $smwgNamespace;
+
+	wfLoadExtension( 'SemanticMediaWiki' );
 
 	// Apparently this is required (1.28+) as the earliest possible execution
 	// point in order for settings that refer to the SMW_NS_PROPERTY namespace
@@ -255,6 +257,13 @@ function enableSemantics( $namespace = null, $complete = false ) {
 	$GLOBALS['smwgSemanticsEnabled'] = true;
 
 	return true;
+}
+
+/**
+ * @deprecated since 3.0, use enableSemanticMediaWiki
+ */
+function enableSemantics( $namespace = null, $complete = false ) {
+	return enableSemanticMediaWiki( $namespace, $complete );
 }
 
 /**
