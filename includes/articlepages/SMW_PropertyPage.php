@@ -119,7 +119,13 @@ class SMWPropertyPage extends SMWOrderedListPage {
 			$applicationFactory->singleton( 'EditProtectionValidator' )->hasEditProtection( $this->mTitle )
 		);
 
-		return $propertyPageMessageHtmlBuilder->createMessageBody( $this->mProperty );
+		$text = $propertyPageMessageHtmlBuilder->createMessageBody(
+			$this->mProperty
+		);
+
+		$this->isLockedView = $propertySpecificationReqExaminer->reqLock();
+
+		return $text;
 	}
 
 	protected function getTopIndicators() {

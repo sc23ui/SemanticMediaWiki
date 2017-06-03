@@ -81,8 +81,12 @@ class PermissionPthValidator {
 			return true;
 		}
 
+		if ( $title->getNamespace() === SMW_NS_PROPERTY ) {
+			return $this->checkChangePropagationProtectionOn( $title, $user, $action, $errors );
+		}
+
 		if ( $this->editProtectionRight && $this->editProtectionValidator->hasProtectionOnNamespace( $title ) ) {
-			return $this->checkPermissionOn( $title, $user, $action, $errors );
+			return $this->checkEditPermissionOn( $title, $user, $action, $errors );
 		}
 
 		return true;
@@ -100,7 +104,7 @@ class PermissionPthValidator {
 		return false;
 	}
 
-	private function checkPermissionOn( Title &$title, User $user, $action, &$errors ) {
+	private function checkEditPermissionOn( Title &$title, User $user, $action, &$errors ) {
 
 		// @see https://www.semantic-mediawiki.org/wiki/Help:Special_property_Is_edit_protected
 		if ( !$this->editProtectionValidator->hasProtection( $title ) || $user->isAllowed( $this->editProtectionRight ) ) {
@@ -108,6 +112,17 @@ class PermissionPthValidator {
 		}
 
 		$errors[] = array( 'smw-edit-protection', $this->editProtectionRight );
+
+		return false;
+	}
+
+	private function checkChangePropagationProtectionOn( Title &$title, User $user, $action, &$errors ) {
+
+		if ( !$this->editProtectionValidator->hasChangePropagationProtection( $title ) ) {
+			return $this->checkEditPermissionOn( $title, $user, $action, $errors );
+		}
+
+		$errors[] = array( 'smw-change-propagation-protection' );
 
 		return false;
 	}

@@ -42,6 +42,11 @@ class StoreUpdater {
 	private $applicationFactory = null;
 
 	/**
+	 * @var boolean
+	 */
+	private $isCommandLineMode = false;
+
+	/**
 	 * @since  1.9
 	 *
 	 * @param Store $store
@@ -50,6 +55,18 @@ class StoreUpdater {
 	public function __construct( Store $store, SemanticData $semanticData ) {
 		$this->store = $store;
 		$this->semanticData = $semanticData;
+	}
+
+	/**
+	 * @see https://www.mediawiki.org/wiki/Manual:$wgCommandLineMode
+	 * Indicates whether MW is running in command-line mode.
+	 *
+	 * @since 3.0
+	 *
+	 * @param boolean $isCommandLineMode
+	 */
+	public function isCommandLineMode( $isCommandLineMode ) {
+		$this->isCommandLineMode = $isCommandLineMode;
 	}
 
 	/**
@@ -188,20 +205,28 @@ class StoreUpdater {
 	 */
 	private function inspectPropertySpecification() {
 
-		if ( !$this->isEnabledWithUpdateJob ) {
+		if ( !$this->isEnabledWithUpdateJob || $this->semanticData->getSubject()->getNamespace() !== SMW_NS_PROPERTY ) {
 			return;
 		}
 
 		$propertySpecificationChangeNotifier = new PropertySpecificationChangeNotifier(
-			$this->store
+			$this->store,
+			$this->semanticData
 		);
 
 		$propertySpecificationChangeNotifier->setPropertyList(
 			$this->applicationFactory->getSettings()->get( 'smwgDeclarationProperties' )
 		);
 
-		$propertySpecificationChangeNotifier->detectChangesOn( $this->semanticData );
-		$propertySpecificationChangeNotifier->notify();
+		$propertySpecificationChangeNotifier->isCommandLineMode(
+			$this->isCommandLineMode
+		);
+
+		$propertySpecificationChangeNotifier->checkAndDetectChanges();
+
+		$propertySpecificationChangeNotifier->notifyAndSuspendOnDiff(
+			$this->semanticData
+		);
 	}
 
 	private function doRealUpdate() {

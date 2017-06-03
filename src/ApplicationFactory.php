@@ -362,7 +362,17 @@ class ApplicationFactory {
 	 * @return StoreUpdater
 	 */
 	public function newStoreUpdater( SemanticData $semanticData ) {
-		return new StoreUpdater( $this->getStore(), $semanticData );
+
+		$storeUpdater = new StoreUpdater(
+			$this->getStore(),
+			$semanticData
+		);
+
+		$storeUpdater->isCommandLineMode(
+			$GLOBALS['wgCommandLineMode']
+		);
+
+		return $storeUpdater;
 	}
 
 	/**

@@ -18,6 +18,8 @@ use Title;
 class UpdateJobTest extends \PHPUnit_Framework_TestCase {
 
 	private $testEnvironment;
+	private $semanticDataFactory;
+	private $semanticDataSerializer;
 
 	protected function setUp() {
 		parent::setUp();
@@ -26,7 +28,8 @@ class UpdateJobTest extends \PHPUnit_Framework_TestCase {
 			'smwgCacheType'        => 'hash',
 			'smwgEnableUpdateJobs' => false,
 			'smwgEnabledDeferredUpdate' => false,
-			'smwgDVFeatures' => ''
+			'smwgDVFeatures' => '',
+			'smwgSemanticsEnabled' => false
 		) );
 
 		$idTable = $this->getMockBuilder( '\stdClass' )
@@ -47,6 +50,9 @@ class UpdateJobTest extends \PHPUnit_Framework_TestCase {
 			->will( $this->returnValue( array() ) );
 
 		$this->testEnvironment->registerObject( 'Store', $store );
+
+		$this->semanticDataFactory = $this->testEnvironment->getUtilityFactory()->newSemanticDataFactory();
+		$this->semanticDataSerializer = \SMW\ApplicationFactory::getInstance()->newSerializerFactory()->newSemanticDataSerializer();
 	}
 
 	protected function tearDown() {
@@ -248,6 +254,37 @@ class UpdateJobTest extends \PHPUnit_Framework_TestCase {
 		$instance->isEnabledJobQueue( false );
 
 		$this->assertTrue( $instance->run() );
+	}
+
+	public function testJobOnSerializedSemanticData() {
+
+		$title = Title::newFromText( __METHOD__ );
+
+		$store = $this->getMockBuilder( '\SMW\Store' )
+			->disableOriginalConstructor()
+			->setMethods( array( 'updateData' ) )
+			->getMockForAbstractClass();
+
+		$store->expects( $this->once() )
+			->method( 'updateData' );
+
+		$this->testEnvironment->registerObject( 'Store', $store );
+
+		$semanticData = $this->semanticDataSerializer->serialize(
+			$this->semanticDataFactory->newEmptySemanticData( __METHOD__ )
+		);
+
+		$instance = new UpdateJob( $title,
+			array(
+				'semanitcData' => $semanticData
+			)
+		);
+
+		$instance->isEnabledJobQueue( false );
+
+		$this->assertTrue(
+			$instance->run()
+		);
 	}
 
 }

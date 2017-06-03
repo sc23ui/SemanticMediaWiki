@@ -211,6 +211,7 @@ final class Setup {
 			'SMW\TempChangeOpPurgeJob' => 'SMW\MediaWiki\Jobs\TempChangeOpPurgeJob',
 			'SMW\PropertyStatisticsRebuildJob' => 'SMW\MediaWiki\Jobs\PropertyStatisticsRebuildJob',
 			'SMW\FulltextSearchTableRebuildJob' => 'SMW\MediaWiki\Jobs\FulltextSearchTableRebuildJob',
+			'SMW\ChangePropagationJob' => 'SMW\MediaWiki\Jobs\ChangePropagationJob',
 
 			// Legacy definition to be removed with 1.10
 			'SMWUpdateJob'  => 'SMW\MediaWiki\Jobs\UpdateJob',

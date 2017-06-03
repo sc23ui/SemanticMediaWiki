@@ -69,7 +69,7 @@ class PropertyPageMessageHtmlBuilder {
 			$this->propertySpecificationReqExaminer->checkOn( $property )
 		);
 
-		if ( $this->hasEditProtection ) {
+		if ( $this->hasEditProtection && $this->propertySpecificationReqExaminer->reqLock() === false ) {
 			$message .= $this->createEditProtectionMessage( $propertyName );
 		}
 

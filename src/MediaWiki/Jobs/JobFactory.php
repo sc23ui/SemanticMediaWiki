@@ -57,6 +57,8 @@ class JobFactory {
 				return $this->newFulltextSearchTableUpdateJob( $title, $parameters );
 			case 'SMW\FulltextSearchTableRebuildJob':
 				return $this->newFulltextSearchTableRebuildJob( $title, $parameters );
+			case 'SMW\ChangePropagationJob':
+				return $this->newChangePropagationJob( $title, $parameters );
 		}
 
 		throw new RuntimeException( "Unable to match $type to a valid Job type" );
@@ -168,6 +170,18 @@ class JobFactory {
 	 */
 	public function newFulltextSearchTableRebuildJob( Title $title, array $parameters = array() ) {
 		return new FulltextSearchTableRebuildJob( $title, $parameters );
+	}
+
+	/**
+	 * @since 3.0
+	 *
+	 * @param Title $title
+	 * @param array $parameters
+	 *
+	 * @return ChangePropagationJob
+	 */
+	public function newChangePropagationJob( Title $title, array $parameters = array() ) {
+		return new ChangePropagationJob( $title, $parameters );
 	}
 
 }

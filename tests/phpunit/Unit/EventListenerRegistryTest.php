@@ -86,13 +86,13 @@ class EventListenerRegistryTest extends \PHPUnit_Framework_TestCase {
 			->disableOriginalConstructor()
 			->getMockForAbstractClass();
 
-		$store->expects( $this->atLeastOnce() )
-			->method( 'getProperties' )
-			->will( $this->returnValue( array() ) );
+	//	$store->expects( $this->atLeastOnce() )
+	//		->method( 'getProperties' )
+	//		->will( $this->returnValue( array() ) );
 
-		$store->expects( $this->atLeastOnce() )
-			->method( 'getInProperties' )
-			->will( $this->returnValue( array() ) );
+	//	$store->expects( $this->atLeastOnce() )
+	//		->method( 'getInProperties' )
+	//		->will( $this->returnValue( array() ) );
 
 		$this->testEnvironment->registerObject( 'Store', $store );
 

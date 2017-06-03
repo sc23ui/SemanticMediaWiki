@@ -3,6 +3,7 @@
 namespace SMW;
 
 use SMWDataItem;
+use SMWDIBlob as DIBlob;
 
 /**
  * Before a new set of data (type, constraints etc.) is stored about a property
@@ -38,12 +39,31 @@ class PropertySpecificationChangeNotifier {
 	private $hasDiff = false;
 
 	/**
+	 * @var boolean
+	 */
+	private $isCommandLineMode = false;
+
+	/**
 	 * @since 1.9
 	 *
 	 * @param Store $store
+	 * @param SemanticData $semanticData
 	 */
-	public function __construct( Store $store ) {
+	public function __construct( Store $store, SemanticData $semanticData ) {
 		$this->store = $store;
+		$this->semanticData = $semanticData;
+	}
+
+	/**
+	 * @see https://www.mediawiki.org/wiki/Manual:$wgCommandLineMode
+	 * Indicates whether MW is running in command-line mode.
+	 *
+	 * @since 3.0
+	 *
+	 * @param boolean $isCommandLineMode
+	 */
+	public function isCommandLineMode( $isCommandLineMode ) {
+		$this->isCommandLineMode = $isCommandLineMode;
 	}
 
 	/**
@@ -85,6 +105,49 @@ class PropertySpecificationChangeNotifier {
 	}
 
 	/**
+	 * @since 3.0
+	 *
+	 * @param SemanticData
+	 */
+	public function notifyAndSuspendOnDiff( SemanticData &$semanticData ) {
+
+		if ( !$this->hasDiff() ) {
+			return;
+		}
+
+		if ( $this->isCommandLineMode ) {
+			return $this->notify();
+		}
+
+		$previous = $this->store->getSemanticData(
+			$semanticData->getSubject()
+		);
+
+		$semanticDataSerializer = ApplicationFactory::getInstance()->newSerializerFactory()->newSemanticDataSerializer();
+
+		$new = $semanticDataSerializer->serialize(
+			$semanticData
+		);
+
+		$dispatchContext = EventHandler::getInstance()->newDispatchContext();
+		$dispatchContext->set( 'subject', $this->semanticData->getSubject() );
+
+		EventHandler::getInstance()->getEventDispatcher()->dispatch(
+			'property.specification.change',
+			$dispatchContext
+		);
+
+		// Encode and store the new version of the SemanticData and suspend
+		// its update until ChangePropagationJob is run
+		$previous->addPropertyObjectValue(
+			new DIProperty( DIProperty::TYPE_CHANGE_PROP ),
+			new DIBlob( json_encode( $new ) )
+		);
+
+		$semanticData = $previous;
+	}
+
+	/**
 	 * Compare and detect differences between the invoked semantic data
 	 * and the current stored data
 	 *
@@ -92,12 +155,8 @@ class PropertySpecificationChangeNotifier {
 	 * (e.g '_PLIST') to find a possible specification change
 	 *
 	 * @since 1.9
-	 *
-	 * @param SemanticData $semanticData
 	 */
-	public function detectChangesOn( SemanticData $semanticData ) {
-
-		$this->semanticData = $semanticData;
+	public function checkAndDetectChanges() {
 
 		if ( $this->semanticData->getSubject()->getNamespace() !== SMW_NS_PROPERTY ) {
 			return;

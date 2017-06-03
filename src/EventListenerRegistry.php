@@ -84,7 +84,9 @@ class EventListenerRegistry implements EventListenerCollection {
 				}
 
 				$applicationFactory = ApplicationFactory::getInstance();
-				$applicationFactory->getMediaWikiLogger()->info( 'Event: cached.propertyvalues.prefetcher.reset :: ' . $subject->getHash() );
+				$applicationFactory->getMediaWikiLogger()->info(
+					'Event (cached.propertyvalues.prefetcher.reset) on ' . $subject->getHash()
+				);
 
 				$applicationFactory->singleton( 'CachedPropertyValuesPrefetcher' )->resetCacheBy(
 					$subject
@@ -110,7 +112,9 @@ class EventListenerRegistry implements EventListenerCollection {
 				$context = $dispatchContext->has( 'context' ) ? $dispatchContext->get( 'context' ) : '';
 
 				$applicationFactory = ApplicationFactory::getInstance();
-				$applicationFactory->getMediaWikiLogger()->info( 'Event: cached.prefetcher.reset :: ' . $subject->getHash() );
+				$applicationFactory->getMediaWikiLogger()->info(
+					'Event (cached.prefetcher.reset) on ' . $subject->getHash()
+				);
 
 				$applicationFactory->singleton( 'CachedPropertyValuesPrefetcher' )->resetCacheBy(
 					$subject
@@ -140,7 +144,7 @@ class EventListenerRegistry implements EventListenerCollection {
 	private function registerStateChangeEvents() {
 
 		/**
-		 * Emitted during PropertySpecificationChangeNotifier::notifyDispatcher
+		 * Emitted during PropertySpecificationChangeNotifier::notify
 		 */
 		$this->eventListenerCollection->registerCallback(
 			'property.specification.change', function( $dispatchContext ) {
@@ -148,12 +152,16 @@ class EventListenerRegistry implements EventListenerCollection {
 				$applicationFactory = ApplicationFactory::getInstance();
 				$subject = $dispatchContext->get( 'subject' );
 
-				$updateDispatcherJob = $applicationFactory->newJobFactory()->newByType(
-					'SMW\UpdateDispatcherJob',
+				$applicationFactory->getMediaWikiLogger()->info(
+					'Event (property.specification.change) on ' . $subject->getHash()
+				);
+
+				$changePropagationJob = $applicationFactory->newJobFactory()->newByType(
+					'SMW\ChangePropagationJob',
 					$subject->getTitle()
 				);
 
-				$updateDispatcherJob->run();
+				$changePropagationJob->lazyPush();
 
 				Exporter::getInstance()->resetCacheBy( $subject );
 				$applicationFactory->getPropertySpecificationLookup()->resetCacheBy( $subject );
