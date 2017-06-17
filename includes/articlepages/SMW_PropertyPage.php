@@ -334,6 +334,12 @@ class SMWPropertyPage extends SMWOrderedListPage {
 			$values = $this->store->getPropertyValues( $diWikiPage, $this->mProperty, $ropts );
 			$i = 0;
 
+			$outputFormat = 'LOCL';
+
+			if ( Localizer::getInstance()->hasLocalTimeOffsetPreference( $this->getUser() ) ) {
+				$outputFormat .= '#TO';
+			}
+
 			foreach ( $values as $di ) {
 				if ( $i != 0 ) {
 					$r .= ', ';
@@ -343,7 +349,7 @@ class SMWPropertyPage extends SMWOrderedListPage {
 				if ( $i < $smwgMaxPropertyValues + 1 ) {
 					$dv = DataValueFactory::getInstance()->newDataValueByItem( $di, $this->mProperty );
 
-					$dv->setOutputFormat( 'LOCL' );
+					$dv->setOutputFormat( $outputFormat );
 
 					$r .= $dv->getShortHTMLText( smwfGetLinker() ) . $dv->getInfolinkText( SMW_OUTPUT_HTML, smwfGetLinker() );
 				} else {

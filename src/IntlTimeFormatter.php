@@ -5,7 +5,9 @@ namespace SMW;
 use Language;
 use SMWDITime as DITime;
 use DateTimeZone;
+use DateTime;
 use SMW\DataValues\Time\Timezone;
+use SMW\DataValues\Time\LocalTime;
 
 /**
  * @license GNU GPL v2+
@@ -17,6 +19,7 @@ class IntlTimeFormatter {
 
 	const LOCL_DEFAULT = 0;
 	const LOCL_TIMEZONE = 0x2;
+	const LOCL_TIMEOFFSET = 0x4;
 
 	/**
 	 * @var DITime
@@ -27,6 +30,11 @@ class IntlTimeFormatter {
 	 * @var Language
 	 */
 	private $language;
+
+	/**
+	 * @var boolean
+	 */
+	private $hasTimeCorrection = false;
 
 	/**
 	 * @since 2.4
@@ -44,6 +52,15 @@ class IntlTimeFormatter {
 	}
 
 	/**
+	 * @since 3.0
+	 *
+	 * @return boolean
+	 */
+	public function hasTimeCorrection() {
+		return $this->hasTimeCorrection;
+	}
+
+	/**
 	 * @since 2.4
 	 *
 	 * @param integer $formatFlag
@@ -53,14 +70,21 @@ class IntlTimeFormatter {
 	public function getLocalizedFormat( $formatFlag = self::LOCL_DEFAULT ) {
 
 		$dateTime = $this->dataItem->asDateTime();
-		$timezoneLiteral = '';
+		$timezone = '';
+		$this->hasTimeCorrection = false;
 
 		if ( !$dateTime ) {
 			return false;
 		}
 
-		if ( $formatFlag === self::LOCL_TIMEZONE ) {
-			$timezoneLiteral = $this->getTimezoneLiteralWithModifiedDateTime( $dateTime );
+		if ( ( self::LOCL_TIMEOFFSET & $formatFlag ) != 0 ) {
+			LocalTime::adjustTimeByPreference( $dateTime, $GLOBALS['wgUser'] );
+			$this->hasTimeCorrection = !( $dateTime == $this->dataItem->asDateTime() );
+		}
+
+		if ( ( self::LOCL_TIMEZONE & $formatFlag ) != 0 ) {
+			$timezone = $this->dataItem->getTimezone();
+			Timezone::adjustTimeByZone( $dateTime, $timezone );
 		}
 
 		$extraneousLanguage = Localizer::getInstance()->getExtraneousLanguage(
@@ -70,7 +94,7 @@ class IntlTimeFormatter {
 		$precision = $this->dataItem->getPrecision();
 
 		// Look for the Z precision which indicates the position of the TZ
-		if ( $precision === SMW_PREC_YMDT && $timezoneLiteral !== '' ) {
+		if ( $precision === SMW_PREC_YMDT && $timezone !== '' ) {
 			$precision = SMW_PREC_YMDTZ;
 		}
 
@@ -87,7 +111,7 @@ class IntlTimeFormatter {
 			$preferredDateFormatByPrecision
 		);
 
-		return str_replace( '**', $timezoneLiteral, $dateString );
+		return str_replace( '**', $timezone, $dateString );
 	}
 
 	/**
@@ -188,34 +212,6 @@ class IntlTimeFormatter {
 		}
 
 		return $output;
-	}
-
-	private function getTimezoneLiteralWithModifiedDateTime( &$dateTime ) {
-
-		$timezone = 0;
-
-		// If the date/time is in the UTC form then it is assumed that no other
-		// TZ was selected to modify a value output hence it would be possible
-		// to match a user preference with the `timecorrection` setting and use
-		// it as an input for those dates to make the display take into account
-		// a user ontext.
-		//
-		// - Inject/use a setter for the `timecorrection` preference as it depends
-		// on a User object.
-		// - The ParserCache doesn't recognizes changes for users with different
-		// `timecorrection` settings therefore this needs to be dealt with before
-		// otherwise a change by one user will remain active in the ParserCache
-		// even though a different user has a different `timecorrection` setting.
-		// Changes to the output is only triggered when the ParserCache is evicted or
-		// purged manually.
-		if ( $this->dataItem->getTimezone() === '0' ) {
-		//	$parts = explode( '|', $GLOBALS['wgUser']->getOption( 'timecorrection' ) );
-		//	$timezone = count( $parts ) == 3 ? $parts[2] : false;
-		} else {
-			$timezone = $this->dataItem->getTimezone();
-		}
-
-		return Timezone::getTimezoneLiteralWithModifiedDateTime( $dateTime, $timezone );
 	}
 
 }

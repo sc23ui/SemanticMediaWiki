@@ -5,6 +5,7 @@ namespace SMW;
 use SMW\ExtraneousLanguage\ExtraneousLanguage;
 use Language;
 use Title;
+use User;
 
 /**
  * @license GNU GPL v2+
@@ -70,6 +71,22 @@ class Localizer {
 	 */
 	public function getUserLanguage() {
 		return $GLOBALS['wgLang'];
+	}
+
+	/**
+	 * @since 3.0
+	 *
+	 * @param User|null $user
+	 *
+	 * @return boolean
+	 */
+	public function hasLocalTimeOffsetPreference( $user ) {
+
+		if ( !$user instanceof User ) {
+			$user = $GLOBALS['wgUser'];
+		}
+
+		return $user->getOption( 'smw-prefs-general-options-time-correction' );
 	}
 
 	/**

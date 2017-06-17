@@ -292,7 +292,7 @@ class Timezone {
 	 *
 	 * @return DateInterval
 	 */
-	public static function newDateIntervalWithOffsetBy( $abbreviation ) {
+	public static function newDateIntervalWithOffsetFrom( $abbreviation ) {
 
 		$minutes = 0;
 		$hour = 0;
@@ -354,10 +354,10 @@ class Timezone {
 	 *
 	 * @return string
 	 */
-	public static function getTimezoneLiteralWithModifiedDateTime( DateTime &$dateTime, $identifer = 0 ) {
+	public static function adjustTimeByZone( DateTime &$dateTime, &$tz = 0 ) {
 
-		if ( ( $timezoneLiteral = self::getTimezoneLiteralById( $identifer ) ) === false ) {
-			return '';
+		if ( ( $timezoneLiteral = self::getTimezoneLiteralById( $tz ) ) === false ) {
+			return $tz = $timezoneLiteral;
 		}
 
 		$dateTimeZone = null;
@@ -368,7 +368,7 @@ class Timezone {
 
 		// DI is stored in UTC time therefore find and add the offset
 		if ( !$dateTimeZone instanceof DateTimeZone ) {
-			$dateInterval = self::newDateIntervalWithOffsetBy( $timezoneLiteral );
+			$dateInterval = self::newDateIntervalWithOffsetFrom( $timezoneLiteral );
 
 			if ( self::getOffsetByAbbreviation( $timezoneLiteral ) > 0 ) {
 				$dateTime->add( $dateInterval );
@@ -379,7 +379,7 @@ class Timezone {
 			$dateTime->setTimezone( $dateTimeZone );
 		}
 
-		return $timezoneLiteral;
+		return $tz = $timezoneLiteral;
 	}
 
 }
